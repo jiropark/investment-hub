@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="60">
+    <title>Investment Hub</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'Noto Sans KR', sans-serif;
+            background: #0f0f1a;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px 30px;
+            border-bottom: 1px solid #2a2a4a;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 { font-size: 1.5rem; color: #fff; }
+        .header .meta { font-size: 0.85rem; color: #888; }
+        .header .status {
+            display: flex; gap: 8px; align-items: center;
+        }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.on { background: #51cf66; }
+        .status-dot.off { background: #ff6b6b; }
+
+        /* Summary Bar */
+        .summary-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            padding: 20px 30px;
+            background: #12121f;
+        }
+        .summary-card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 16px 20px;
+            border-left: 4px solid #4dabf7;
+        }
+        .summary-card .label { font-size: 0.8rem; color: #888; margin-bottom: 4px; }
+        .summary-card .value { font-size: 1.6rem; font-weight: 700; color: #fff; }
+        .summary-card .sub { font-size: 0.8rem; color: #888; margin-top: 2px; }
+        .summary-card.profit .value { color: #51cf66; }
+        .summary-card.loss .value { color: #ff6b6b; }
+
+        /* Main Grid */
+        .main { padding: 20px 30px; }
+        .strategies {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+        }
+
+        /* Strategy Card */
+        .strategy-card {
+            background: #1a1a2e;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #2a2a4a;
+            transition: transform 0.2s;
+        }
+        .strategy-card:hover { transform: translateY(-2px); }
+
+        .card-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .card-header .title {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .card-header .icon { font-size: 1.5rem; }
+        .card-header h2 { font-size: 1.1rem; color: #fff; }
+        .card-header .badge {
+            font-size: 0.7rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge.online { background: rgba(81, 207, 102, 0.15); color: #51cf66; }
+        .badge.offline { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+
+        .card-body { padding: 0 20px 16px; }
+
+        .strategy-desc {
+            font-size: 0.78rem;
+            color: #777;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* Metrics Grid */
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .metric {
+            background: #12121f;
+            border-radius: 8px;
+            padding: 10px 12px;
+            text-align: center;
+        }
+        .metric .m-label { font-size: 0.7rem; color: #888; margin-bottom: 4px; }
+        .metric .m-value { font-size: 1.05rem; font-weight: 700; }
+        .positive { color: #51cf66; }
+        .negative { color: #ff6b6b; }
+        .neutral { color: #4dabf7; }
+
+        /* Holdings */
+        .section-title {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 8px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #2a2a4a;
+        }
+
+        .holdings-list {
+            max-height: 160px;
+            overflow-y: auto;
+        }
+        .holding-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 0.82rem;
+            border-bottom: 1px solid #1f1f35;
+        }
+        .holding-row:last-child { border-bottom: none; }
+        .holding-name { color: #ccc; flex: 1; }
+        .holding-pnl { font-weight: 600; min-width: 70px; text-align: right; }
+
+        /* Trades */
+        .trades-list {
+            max-height: 140px;
+            overflow-y: auto;
+        }
+        .trade-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 0;
+            font-size: 0.78rem;
+            border-bottom: 1px solid #1f1f35;
+        }
+        .trade-row:last-child { border-bottom: none; }
+        .trade-side {
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            min-width: 36px;
+            text-align: center;
+        }
+        .trade-side.buy { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }
+        .trade-side.sell { background: rgba(81, 207, 102, 0.15); color: #51cf66; }
+        .trade-info { flex: 1; margin-left: 8px; color: #bbb; }
+        .trade-time { color: #666; font-size: 0.72rem; }
+
+        /* Extra Info */
+        .extra-info {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: #12121f;
+            border-radius: 8px;
+            font-size: 0.78rem;
+        }
+        .extra-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+        }
+        .extra-row .ek { color: #888; }
+        .extra-row .ev { color: #ccc; font-weight: 600; }
+
+        /* Link to original dashboard */
+        .card-footer {
+            padding: 10px 20px;
+            border-top: 1px solid #2a2a4a;
+            text-align: center;
+        }
+        .card-footer a {
+            color: #4dabf7;
+            text-decoration: none;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+        .card-footer a:hover { text-decoration: underline; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { flex-direction: column; gap: 8px; }
+            .summary-bar { grid-template-columns: repeat(2, 1fr); padding: 12px 16px; }
+            .strategies { grid-template-columns: 1fr; }
+            .main { padding: 12px 16px; }
+            .metrics { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        /* No data placeholder */
+        .no-data {
+            text-align: center;
+            color: #555;
+            padding: 20px;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div>
+        <h1>Investment Hub</h1>
+        <div class="meta">4개 투자 전략 통합 대시보드</div>
+    </div>
+    <div>
+        <div class="status">
+            <span class="status-dot {{ 'on' if online_count == 4 else 'off' }}"></span>
+            <span style="font-size:0.85rem; color:#aaa;">{{ online_count }}/4 온라인</span>
+            <span style="font-size:0.8rem; color:#666; margin-left:12px;">{{ now }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Bar -->
+<div class="summary-bar">
+    <div class="summary-card" style="border-left-color: #fff;">
+        <div class="label">통합 총자산</div>
+        <div class="value">{{ "{:,.0f}".format(total_asset) }}원</div>
+        <div class="sub">초기자본 {{ "{:,.0f}".format(total_initial) }}원</div>
+    </div>
+    <div class="summary-card {{ 'profit' if total_return >= 0 else 'loss' }}" style="border-left-color: {{ '#51cf66' if total_return >= 0 else '#ff6b6b' }};">
+        <div class="label">통합 수익률</div>
+        <div class="value">{{ "{:+.2f}".format(total_return) }}%</div>
+        <div class="sub">{{ "{:+,.0f}".format(total_asset - total_initial) }}원</div>
+    </div>
+    {% for key, item in data.items() %}
+    {% if item.online %}
+    {% set p = item.portfolio %}
+    {% set asset = p.get('total_asset', 0) or p.get('total_value', 0) or 0 %}
+    {% set initial = p.get('initial_capital', 5000000) or 5000000 %}
+    {% set ret = ((asset / initial - 1) * 100) if initial > 0 else 0 %}
+    <div class="summary-card" style="border-left-color: {{ item.info.color }};">
+        <div class="label">{{ item.info.icon }} {{ item.info.name }}</div>
+        <div class="value" style="color: {{ '#51cf66' if ret >= 0 else '#ff6b6b' }};">{{ "{:+.2f}".format(ret) }}%</div>
+        <div class="sub">{{ "{:,.0f}".format(asset) }}원</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Strategy Cards -->
+<div class="main">
+    <div class="strategies">
+        {% for key, item in data.items() %}
+        <div class="strategy-card">
+            <!-- Header -->
+            <div class="card-header" style="border-bottom: 2px solid {{ item.info.color }};">
+                <div class="title">
+                    <span class="icon">{{ item.info.icon }}</span>
+                    <h2>{{ item.info.name }}</h2>
+                </div>
+                <span class="badge {{ 'online' if item.online else 'offline' }}">
+                    {{ '● 온라인' if item.online else '● 오프라인' }}
+                </span>
+            </div>
+
+            <div class="card-body">
+                <div class="strategy-desc">{{ item.info.desc }}</div>
+
+                {% if item.online %}
+                {% set p = item.portfolio %}
+                {% set asset = p.get('total_asset', 0) or p.get('total_value', 0) or 0 %}
+                {% set cash = p.get('cash', 0) or p.get('cash_balance', 0) or 0 %}
+                {% set stock_val = p.get('stock_value', 0) or p.get('holdings_value', 0) or (asset - cash) %}
+                {% set initial = p.get('initial_capital', 5000000) or 5000000 %}
+                {% set ret = ((asset / initial - 1) * 100) if initial > 0 else 0 %}
+                {% set positions = p.get('positions', []) or p.get('holdings', []) or [] %}
+
+                <!-- Metrics -->
+                <div class="metrics">
+                    <div class="metric">
+                        <div class="m-label">총자산</div>
+                        <div class="m-value neutral">{{ "{:,.0f}".format(asset) }}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">수익률</div>
+                        <div class="m-value {{ 'positive' if ret >= 0 else 'negative' }}">{{ "{:+.2f}".format(ret) }}%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">현금</div>
+                        <div class="m-value" style="color:#ccc;">{{ "{:,.0f}".format(cash) }}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">주식평가</div>
+                        <div class="m-value" style="color:#ccc;">{{ "{:,.0f}".format(stock_val) }}</div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">보유종목</div>
+                        <div class="m-value" style="color:#ccc;">
+                            {% if positions is iterable and positions is not string %}
+                                {{ positions|length }}
+                            {% else %}
+                                {{ p.get('position_count', 0) or p.get('num_holdings', 0) or 0 }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="metric">
+                        <div class="m-label">손익금액</div>
+                        <div class="m-value {{ 'positive' if (asset - initial) >= 0 else 'negative' }}">
+                            {{ "{:+,.0f}".format(asset - initial) }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Holdings -->
+                {% if positions %}
+                <div class="section-title">보유 종목</div>
+                <div class="holdings-list">
+                    {% for pos in positions[:5] %}
+                    <div class="holding-row">
+                        <span class="holding-name">
+                            {{ pos.get('name', '') or pos.get('stock_name', '') or pos.get('code', '') or pos.get('stock_code', '') }}
+                        </span>
+                        {% set buy_p = pos.get('buy_price', 0) or pos.get('avg_price', 0) or pos.get('entry_price', 0) or 0 %}
+                        {% set cur_p = pos.get('current_price', 0) or pos.get('price', 0) or buy_p %}
+                        {% set pnl_pct = pos.get('pnl_pct', 0) or (((cur_p / buy_p - 1) * 100) if buy_p > 0 else 0) %}
+                        <span class="holding-pnl {{ 'positive' if pnl_pct >= 0 else 'negative' }}">
+                            {{ "{:+.1f}".format(pnl_pct) }}%
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Recent Trades -->
+                {% if item.trades %}
+                <div class="section-title" style="margin-top:12px;">최근 매매</div>
+                <div class="trades-list">
+                    {% for t in item.trades %}
+                    <div class="trade-row">
+                        {% set side = t.get('side', '') or t.get('type', '') or t.get('trade_type', '') %}
+                        <span class="trade-side {{ 'buy' if 'BUY' in side.upper() else 'sell' }}">
+                            {{ 'BUY' if 'BUY' in side.upper() else 'SELL' }}
+                        </span>
+                        <span class="trade-info">
+                            {{ t.get('name', '') or t.get('stock_name', '') or t.get('code', '') or t.get('stock_code', '') }}
+                            {% if t.get('price') %}
+                                · {{ "{:,.0f}".format(t.get('price', 0)) }}원
+                            {% endif %}
+                            {% if t.get('profit_pct') or t.get('pnl') %}
+                                {% set tpnl = t.get('profit_pct', 0) or t.get('pnl', 0) or 0 %}
+                                <span class="{{ 'positive' if tpnl >= 0 else 'negative' }}">
+                                    ({{ "{:+.1f}".format(tpnl) }}%)
+                                </span>
+                            {% endif %}
+                        </span>
+                        <span class="trade-time">
+                            {{ (t.get('created_at', '') or t.get('timestamp', '') or t.get('date', ''))[-11:-3] }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Extra Info per strategy -->
+                {% if item.extra %}
+                <div class="extra-info">
+                    {% if key == 'kis' %}
+                        <div class="extra-row">
+                            <span class="ek">시그널 수</span>
+                            <span class="ev">{{ item.extra.get('signal_count', 0) }}건</span>
+                        </div>
+                        <div class="extra-row">
+                            <span class="ek">매수 시그널</span>
+                            <span class="ev" style="color:#ff6b6b;">{{ item.extra.get('buy_signals', 0) }}건</span>
+                        </div>
+                    {% elif key == 'stock' %}
+                        {% if item.extra.get('top_scores') %}
+                        <div class="extra-row">
+                            <span class="ek">TOP 점수 종목</span>
+                            <span class="ev">{{ item.extra.top_scores|length }}개</span>
+                        </div>
+                        {% for sc in item.extra.top_scores[:3] %}
+                        <div class="extra-row">
+                            <span class="ek" style="padding-left:8px;">{{ sc.get('name', sc.get('stock_name', '')) }}</span>
+                            <span class="ev" style="color:#ffd43b;">{{ "{:.2f}".format(sc.get('score', 0)) }}</span>
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                    {% elif key == 'kospi' %}
+                        {% if item.extra.get('market') %}
+                        {% set m = item.extra.market %}
+                        <div class="extra-row">
+                            <span class="ek">시장 필터</span>
+                            <span class="ev" style="color:{{ '#51cf66' if m.get('filter_on') or m.get('is_on') else '#ff6b6b' }};">
+                                {{ 'ON' if m.get('filter_on') or m.get('is_on') else 'OFF' }}
+                            </span>
+                        </div>
+                        {% if m.get('kospi_close') or m.get('close') %}
+                        <div class="extra-row">
+                            <span class="ek">KOSPI</span>
+                            <span class="ev">{{ "{:,.1f}".format(m.get('kospi_close', 0) or m.get('close', 0)) }}</span>
+                        </div>
+                        {% endif %}
+                        {% if m.get('ma120') %}
+                        <div class="extra-row">
+                            <span class="ek">MA120</span>
+                            <span class="ev">{{ "{:,.1f}".format(m.get('ma120', 0)) }}</span>
+                        </div>
+                        {% endif %}
+                        {% endif %}
+                    {% elif key == 'vtp' %}
+                        <div class="extra-row">
+                            <span class="ek">시그널 수</span>
+                            <span class="ev">{{ item.extra.get('signal_count', 0) }}건</span>
+                        </div>
+                        {% if item.extra.get('top_signals') %}
+                            {% for sig in item.extra.top_signals %}
+                            <div class="extra-row">
+                                <span class="ek">{{ sig.get('name', sig.get('code', '')) }}</span>
+                                <span class="ev" style="color: {% if sig.get('score', 0) >= 80 %}#51cf66{% elif sig.get('score', 0) >= 60 %}#ffd43b{% else %}#aaa{% endif %}">
+                                    {{ sig.get('score', 0) }}점
+                                </span>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="extra-row"><span class="ek">시그널 없음</span></div>
+                        {% endif %}
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                {% else %}
+                <!-- Offline -->
+                <div class="no-data">서비스 연결 불가</div>
+                {% endif %}
+            </div>
+
+            <!-- Footer: link to original dashboard -->
+            <div class="card-footer">
+                <a href="http://{{ request.host.split(':')[0] }}:{{ item.info.port }}/" target="_blank">
+                    상세 대시보드 열기 →
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+</body>
+</html>

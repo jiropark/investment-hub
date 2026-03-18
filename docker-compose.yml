@@ -1,0 +1,17 @@
+services:
+  investment-hub:
+    build: .
+    container_name: investment-hub
+    restart: unless-stopped
+    ports:
+      - "8091:8091"
+    environment:
+      - TZ=Asia/Seoul
+      - SERVICE_HOST=host.docker.internal
+      - KIS_PORT=8089
+      - STOCK_PORT=8088
+      - KOSPI_PORT=8090
+      - VTP_PORT=8092
+      - PORT=8091
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
