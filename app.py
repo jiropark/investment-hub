@@ -12,12 +12,12 @@ app = Flask(__name__)
 HOST = os.getenv("SERVICE_HOST", "host.docker.internal")
 SERVICES = {
     "kis": {
-        "name": "KIS 눌림목 스켈핑",
+        "name": "KIS 눌림목 v2",
         "port": int(os.getenv("KIS_PORT", "8089")),
         "color": "#4dabf7",
         "icon": "📊",
-        "strategy": "눌림목 자동매매 (pullback)",
-        "desc": "KIS 모의투자 API, 상승률+거래량 스크리닝, 5% 익절/손절",
+        "strategy": "2단계 확인 진입 (급등 후 안정 확인)",
+        "desc": "5분 워치리스트 → 가격 확인 매수, 손절-4%/익절+7% 전량, 당일 청산",
     },
     "stock": {
         "name": "AI 뉴스 감성분석",
